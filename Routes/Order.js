@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const {Order, OrderItem, User } = require('../models');
+const {Order, OrderItem, User, Book } = require('../models');
 const {validateToken } = require('../Middleware/jwt')
+
 
 router.post('/', validateToken, async(req, res) => {
     const userId = req.userId
@@ -46,7 +47,7 @@ router.get('/', validateToken, async (req, res) => {
         } else {
             const orderDetails = orders.map(order => ({
                 order_id: order.id,
-                customer: order.User.name, 
+                customer: order.User.name,
                 date: order.orderDate,
                 total: order.totalAmount,
                 orderStatus: order.orderStatus
@@ -61,8 +62,9 @@ router.get('/', validateToken, async (req, res) => {
 
 //order detail
 
-router.get('/order-detail/:id',  async (req, res) => {
-    const {id} = req.params;
+router.get('/order-detail/:id', async (req, res) => {
+    const { id } = req.params;
+
     try {
         const order = await Order.findOne({
             where: { id },
@@ -70,21 +72,29 @@ router.get('/order-detail/:id',  async (req, res) => {
                 {
                     model: OrderItem,
                     attributes: ['productId', 'quantity', 'price'],
-                    where: { orderId: id }
-                },
-            ],
+                    where: { orderId: id },
+                    include: [
+                        {
+                            model: Book,
+                            attributes: ['id', 'title'],
+                            required: true
+                        }
+                    ]
+                }
+            ]
         });
 
         if (!order) {
             return res.status(404).json({ error: 'Order not found' });
         }
 
-        res.json({order});
+        res.json({ order });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
 
 //update the order status
 router.put('/:id', validateToken, async (req, res) => {
@@ -107,6 +117,16 @@ router.put('/:id', validateToken, async (req, res) => {
         res.status(500).json({ error: 'Internal server Error' });
     }
 });
+
+//order count
+router.get('/count', validateToken, async(req, res) => {
+    try {
+        const ordersCount = await Order.count();
+        res.status(200).json({total: ordersCount})
+    } catch (error) {
+        res.json({Error: error})
+    }
+})
 
 
 

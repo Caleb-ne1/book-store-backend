@@ -3,7 +3,7 @@ const router = express.Router()
 const bcrypt = require('bcrypt');
 const { User } = require("../models");
 const { generateToken, validateToken } = require('../Middleware/jwt');
-const { where } = require('sequelize');
+
 
 
 router.post('/register', async (req, res) => {
@@ -138,7 +138,7 @@ router.put('/profile/update', validateToken, async (req, res) => {
 
         res.json({ success: true, message: 'Profile updated successfully', user });
     } catch (error) {
-        console.error("Error updating profile:", error); 
+        console.error("Error updating profile:", error);
         res.status(500).json({ error: 'An error occurred while updating profile' });
     }
 });
